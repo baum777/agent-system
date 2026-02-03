@@ -24,6 +24,8 @@ export type ToolRef =
   | "tool.workflow.validateDeliverable"
   | "tool.docs.createDraft"
   | "tool.docs.updateDraft"
+  | "tool.decisions.createDraft"
+  | "tool.decisions.finalizeFromDraft"
   | "tool.logs.append"
   | "tool.reviews.request"
   | "tool.reviews.status";
