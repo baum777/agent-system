@@ -19,3 +19,24 @@ Produkt enthalten.
 1. Agentenprofile in `packages/agent-runtime` definieren.
 2. Workflow-Definitionen als YAML-Assets strukturieren.
 3. Knowledge-, Governance- und Runtime-Komponenten über `pnpm` verbinden.
+
+## Agent-Team Operating Model
+
+This repository uses a structured multi-agent governance layer located in:
+
+ops/agent-team/
+
+Key principles:
+- Repo artifacts are the source of truth (not chat context)
+- Memory-on-disk discipline (team_plan, findings, progress, decisions)
+- Autonomy ladder with approval gates
+- Golden tasks + scorecard quality enforcement
+- Default Team Lead: GPT-5.2 Thinking (Opus only for exceptions)
+
+### Working with Agents (Cursor)
+
+1. Read ops/agent-team/README.md
+2. Open ops/agent-team/team_plan.md
+3. Start with the lead_boot prompt from agent_team_spec.v1.yaml
+4. Follow approval rules before merging
+5. Ensure golden tasks pass before marking work complete
