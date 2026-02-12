@@ -1,0 +1,307 @@
+# File: ops/agent-team/agent_team_spec.v1.yaml
+# Purpose: Machine-readable spec to integrate the final agent-team structure into this repo via Cursor.
+# Default Team Lead: GPT-5.2 Thinking (OPUS only in exceptional cases).
+# Versioning: bump spec_version on breaking changes.
+
+spec_version: "1.0.0"
+repo_integration:
+  root_dir: "ops/agent-team"
+  create_files:
+    - path: "ops/agent-team/README.md"
+      template: "templates/README.md.tmpl"
+    - path: "ops/agent-team/team_plan.md"
+      template: "templates/team_plan.md.tmpl"
+    - path: "ops/agent-team/team_findings.md"
+      template: "templates/team_findings.md.tmpl"
+    - path: "ops/agent-team/team_progress.md"
+      template: "templates/team_progress.md.tmpl"
+    - path: "ops/agent-team/team_decisions.md"
+      template: "templates/team_decisions.md.tmpl"
+    - path: "ops/agent-team/autonomy_policy.md"
+      template: "templates/autonomy_policy.md.tmpl"
+    - path: "ops/agent-team/scorecard_definition.md"
+      template: "templates/scorecard_definition.md.tmpl"
+    - path: "ops/agent-team/trace_schema.json"
+      template: "templates/trace_schema.json"
+    - path: "ops/agent-team/policy_approval_rules.yaml"
+      template: "templates/policy_approval_rules.yaml"
+    - path: "ops/agent-team/golden_tasks.yaml"
+      template: "templates/golden_tasks.yaml"
+    - path: "ops/agent-team/WORKFLOWS.md"
+      template: "templates/WORKFLOWS.md.tmpl"
+    - path: "ops/agent-team/CURSOR_SETUP.md"
+      template: "templates/CURSOR_SETUP.md.tmpl"
+    - path: "ops/agent-team/.gitignore.additions"
+      template: "templates/gitignore_additions.tmpl"
+  optional_files:
+    - path: ".cursor/rules/agent-team.md"
+      template: "templates/cursor_rules_agent_team.md.tmpl"
+    - path: ".claude/settings.json"
+      template: "templates/claude_settings.json"
+    - path: ".claude/settings.local.json"
+      template: "templates/claude_settings.local.json"
+      gitignore: true
+
+team:
+  defaults:
+    teamlead_model: "GPT-5.2 Thinking"
+    exception_model:
+      name: "Claude Opus 4.6"
+      allowed_when:
+        - "context_window_exceeds_limit_for_required_artifacts"
+        - "high-risk refactor needs second strong validator"
+        - "complex multi-file reasoning where lead requests dedicated validator"
+      hard_limit:
+        max_runs_per_week: 3
+    operating_mode:
+      lead: "delegate-first"
+      communication: "repo-artifacts-first"
+    language: "de"
+
+  roles:
+    - id: "teamlead_orchestrator"
+      title: "Team Lead / Orchestrator"
+      model: "GPT-5.2 Thinking"
+      autonomy_tier_default: 2
+      responsibilities:
+        - "Decompose tasks into workstreams with file-boundaries"
+        - "Assign owners and deadlines in team_plan.md"
+        - "Maintain decision log in team_decisions.md"
+        - "Enforce policy approval rules before merges"
+        - "Keep progress log updated in team_progress.md"
+        - "Trigger QA + scorecard gates before release"
+      allowed_tools:
+        - "read_repo"
+        - "write_markdown_artifacts"
+        - "run_non_destructive_commands"
+      prohibited_actions:
+        - "merge_without_approval_when_required"
+        - "destructive_git_ops_without_confirmation"
+        - "edit_secrets_or_env_files"
+      deliverables:
+        - "Updated ops/agent-team/team_plan.md"
+        - "Updated ops/agent-team/team_progress.md"
+        - "Decision entries in ops/agent-team/team_decisions.md"
+
+    - id: "implementer_codex"
+      title: "Implementer (Codex)"
+      model: "Codex"
+      autonomy_tier_default: 3
+      responsibilities:
+        - "Implement scoped changes by file-boundaries"
+        - "Add/adjust tests per change"
+        - "Document risk + rollback + test plan in PR body"
+        - "Update team_findings.md with important discoveries"
+      required_pr_sections:
+        - "Change Summary"
+        - "Risk Assessment"
+        - "Rollback Strategy"
+        - "Test Plan"
+        - "Files Touched"
+      prohibited_actions:
+        - "introduce new secrets"
+        - "disable tests to pass CI"
+        - "bypass approvals"
+
+    - id: "reviewer_claude"
+      title: "Reviewer / Validator (Claude)"
+      model: "Claude (Reviewer)"
+      autonomy_tier_default: 2
+      responsibilities:
+        - "Review PRs for architecture, safety, regressions"
+        - "Check policy approval compliance"
+        - "Demand evidence: tests, traces, logs"
+        - "Produce risk rating + required follow-ups"
+      review_output_fields:
+        - "RiskRating: Low|Medium|High"
+        - "RequiredTests"
+        - "MergeDecision: Approve|RequestChanges"
+        - "Notes"
+
+    - id: "qa_e2e"
+      title: "QA / E2E"
+      model: "QA Team"
+      autonomy_tier_default: 2
+      responsibilities:
+        - "Maintain golden tasks"
+        - "Run Playwright E2E + report"
+        - "Score each run using scorecard_definition.md"
+      deliverables:
+        - "Update golden_tasks.yaml"
+        - "Attach scorecard results to PR or release notes"
+
+    - id: "observability_eval"
+      title: "Observability / Eval Engineer"
+      model: "Engineer"
+      autonomy_tier_default: 2
+      responsibilities:
+        - "Implement trace schema and minimal telemetry"
+        - "Maintain evaluation hooks and dashboards contract"
+        - "Track cost-per-successful-task"
+      deliverables:
+        - "trace_schema.json alignment"
+        - "Instrumentation notes in team_findings.md"
+
+    - id: "docs_release_captain"
+      title: "Docs / Release Captain"
+      model: "Writer"
+      autonomy_tier_default: 2
+      responsibilities:
+        - "Keep playbook up to date"
+        - "Maintain autonomy_policy + approval rules"
+        - "Changelog + release notes discipline"
+
+artifacts:
+  required:
+    - "ops/agent-team/team_plan.md"
+    - "ops/agent-team/team_findings.md"
+    - "ops/agent-team/team_progress.md"
+    - "ops/agent-team/team_decisions.md"
+    - "ops/agent-team/autonomy_policy.md"
+    - "ops/agent-team/scorecard_definition.md"
+    - "ops/agent-team/policy_approval_rules.yaml"
+    - "ops/agent-team/trace_schema.json"
+    - "ops/agent-team/golden_tasks.yaml"
+  conventions:
+    timestamps: "ISO-8601"
+    ownership_format: "@role_id"
+    status_values:
+      - "todo"
+      - "in_progress"
+      - "blocked"
+      - "in_review"
+      - "done"
+    decision_format:
+      fields: ["date", "decision", "rationale", "alternatives", "implications", "owner"]
+
+autonomy:
+  ladder:
+    1: "read-only"
+    2: "draft-only"
+    3: "execute-with-approval"
+    4: "autonomous-with-limits"
+  defaults:
+    repo_default_tier: 2
+    implementer_default_tier: 3
+  hard_rules:
+    - id: "no_secrets"
+      description: "Never read/write secrets or .env contents; deny by default."
+    - id: "confirm_destructive"
+      description: "Ask for explicit confirmation before destructive actions."
+    - id: "policy_gate_required"
+      description: "If approval rules match, merge requires reviewer approval."
+
+policy_approvals:
+  rules_file: "ops/agent-team/policy_approval_rules.yaml"
+  triggers:
+    - id: "large_change"
+      conditions:
+        files_changed_gt: 20
+        loc_changed_gt: 500
+      require:
+        approvals: 1
+        approver_roles: ["reviewer_claude"]
+    - id: "destructive_ops"
+      conditions:
+        touches_paths_any:
+          - "**/*"
+        operations_any:
+          - "delete_file"
+          - "git_reset"
+          - "git_rebase_interactive"
+          - "force_push"
+      require:
+        approvals: 1
+        approver_roles: ["teamlead_orchestrator", "reviewer_claude"]
+        confirmation: true
+    - id: "ci_or_build"
+      conditions:
+        touches_paths_any:
+          - ".github/**"
+          - "**/ci/**"
+          - "package.json"
+          - "pnpm-lock.yaml"
+          - "turbo.json"
+      require:
+        approvals: 1
+        approver_roles: ["reviewer_claude"]
+    - id: "prompt_or_agent_core"
+      conditions:
+        touches_paths_any:
+          - "**/prompts/**"
+          - "**/agents/**"
+          - "**/system_prompt/**"
+          - "ops/agent-team/**"
+      require:
+        approvals: 1
+        approver_roles: ["reviewer_claude"]
+    - id: "prod_config"
+      conditions:
+        touches_paths_any:
+          - "vercel.json"
+          - ".env*"
+          - "**/config/**"
+      require:
+        approvals: 2
+        approver_roles: ["teamlead_orchestrator", "reviewer_claude"]
+        deny_if_matches:
+          - ".env"
+          - ".env.local"
+
+quality_gates:
+  scorecards:
+    definition_file: "ops/agent-team/scorecard_definition.md"
+    gate_policy:
+      required_for_merge_when:
+        - "policy_approvals_triggered"
+        - "touches_paths_any: **/agents/**"
+        - "touches_paths_any: **/tools/**"
+      fail_conditions:
+        - "critical_safety_fail: true"
+        - "success_rate_regression_pct_gt: 5"
+        - "cost_per_success_regression_pct_gt: 10"
+  golden_tasks:
+    file: "ops/agent-team/golden_tasks.yaml"
+    minimum_count: 25
+
+observability:
+  trace_schema: "ops/agent-team/trace_schema.json"
+  required_fields:
+    - "trace_id"
+    - "request_type"
+    - "prompt_version"
+    - "model"
+    - "tokens_in"
+    - "tokens_out"
+    - "tool_calls"
+    - "latency_total_ms"
+    - "loop_count"
+    - "error_flag"
+  redaction:
+    - "secrets"
+    - "pii"
+    - "raw_wallet_keys"
+
+cursor_integration:
+  entrypoint_doc: "ops/agent-team/CURSOR_SETUP.md"
+  rules_optional_path: ".cursor/rules/agent-team.md"
+  workflows_doc: "ops/agent-team/WORKFLOWS.md"
+  recommended_cursor_prompts:
+    - id: "lead_boot"
+      purpose: "Initialize the agent team in a new Cursor session."
+      prompt: >
+        Read ops/agent-team/README.md and ops/agent-team/team_plan.md.
+        Act as @teamlead_orchestrator (GPT-5.2 Thinking).
+        Do not implement code yet.
+        Update team_plan.md with workstreams, owners, and immediate next actions.
+    - id: "implementer_task"
+      purpose: "Assign a bounded task to Codex."
+      prompt: >
+        Act as @implementer_codex. Implement only the scoped changes defined in team_plan.md
+        under your workstream. Do not touch secrets. Add tests and update team_findings.md.
+    - id: "reviewer_gate"
+      purpose: "Trigger reviewer checks."
+      prompt: >
+        Act as @reviewer_claude. Review the diff for policy compliance, risk, regressions.
+        Output RiskRating, RequiredTests, MergeDecision, Notes.
+
